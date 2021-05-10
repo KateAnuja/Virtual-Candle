@@ -6,36 +6,18 @@ declare var MediaRecorder: any;
   styleUrls: ['home.page.scss'],
 })
 export class HomePage {
+
+  recordedAudio=[];
+
   
   constructor(
   ) {}
   
   ionViewWillEnter(){
-    var audioCtx = new (window.AudioContext)();
-    navigator.mediaDevices.getUserMedia({ audio: true })
-    .then(async stream => {
-      let audioChunks = [];
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorder.start(1000);
-      mediaRecorder.addEventListener("dataavailable", async e => {
-        if(audioChunks.length>5){
-          const audioBlob = new Blob([...audioChunks]);
-          const audioUrl = URL.createObjectURL(audioBlob);
-          const audio = new Audio(audioUrl);
-          await audio.play();
-          audio.onended=()=>{
-            console.log("ended");
-          }
-          this.visualize(audio);
-          audioChunks = [];
-        }
-        audioChunks.push(e.data);
-        
-      });
-
-      
-    });
-
+    this.record();
+    setTimeout(()=>{
+      this.listen();
+    },1000);
   }
 
   ionViewDidEnter(){
@@ -49,6 +31,66 @@ export class HomePage {
   ionViewDidLeave(){
 
   }
+
+  async record(){
+    const recorder:any = await this.recordAudio();
+    recorder.start();
+    setTimeout(async ()=>{
+      const audio =await recorder.stop();
+      this.recordedAudio.push(audio);
+      this.record();
+    },1000);
+  }
+
+  currentAud=0;
+  async listen(){
+    console.log("listen");
+    if(this.recordedAudio[this.currentAud]){
+      let audio=this.recordedAudio[this.currentAud];
+      await audio.play();
+      this.visualize(audio);
+      audio.onended=()=>{
+        console.log("ended");
+        this.currentAud++;
+        this.listen();
+      }
+    }else{
+      setTimeout(()=>{
+        this.listen();
+      },1000);
+    }
+    
+  }
+
+  recordAudio(){
+    return new Promise(async resolve => {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      const audioChunks = [];
+  
+      mediaRecorder.addEventListener("dataavailable", event => {
+        audioChunks.push(event.data);
+      });
+  
+      const start = () => mediaRecorder.start();
+  
+      const stop = () =>
+        new Promise(resolve => {
+          mediaRecorder.addEventListener("stop", () => {
+            const audioBlob = new Blob(audioChunks);
+            const audioUrl = URL.createObjectURL(audioBlob);
+            const audio = new Audio(audioUrl);
+            //const play = () => audio.play();
+            resolve(audio);
+          });
+  
+          mediaRecorder.stop();
+        });
+  
+      resolve({ start, stop });
+    });
+  }
+  
 
   visualize(audio){
     var context = new AudioContext();
@@ -85,6 +127,7 @@ export class HomePage {
 
       for (var i = 0; i < bufferLength; i++) {
         barHeight = dataArray[i];
+        console.log(barHeight);
         
         var r = barHeight + (25 * (i/bufferLength));
         var g = 250 * (i/bufferLength);
