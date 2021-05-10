@@ -1,0 +1,7 @@
+{
+  "name": "EnHausse-Candle",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
