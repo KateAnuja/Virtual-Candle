@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">EnH-Candle</string>
+    <string name="title_activity_main">EnH-Candle</string>
+    <string name="package_name">in.enhausse.candle</string>
+    <string name="custom_url_scheme">in.enhausse.candle</string>
+</resources>
